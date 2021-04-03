@@ -2,7 +2,7 @@ package br.com.gustavoakira.industry.factory.service;
 
 import br.com.gustavoakira.industry.factory.dto.AddDTO;
 import br.com.gustavoakira.industry.factory.dto.ResponseDTO;
-import br.com.gustavoakira.industry.factory.messenger.RequestCreatedMessenger;
+import br.com.gustavoakira.industry.factory.messenger.Messenger;
 import br.com.gustavoakira.industry.factory.model.ProductRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +29,7 @@ public class ListenerService {
     private ProductRequestService service;
 
     @Autowired
-    private RequestCreatedMessenger messenger;
+    private Messenger messenger;
 
 
     @KafkaListener(topics = "${topic.name.consumer}",groupId = "RequestProduct")
@@ -40,6 +40,11 @@ public class ListenerService {
         request.setQuantity(dto.getQuantity());
         request.setProductName(dto.getProduct().getName());
         service.saveNewRequest(request);
-        messenger.send("RequestCreated","{accepted:True}");
+        ResponseDTO responseDTO = new ResponseDTO();
+        responseDTO.setMessage("accepted");
+        responseDTO.setProduct(request.getProductName());
+        responseDTO.setQuantity(request.getQuantity());
+        String message = mapper.writeValueAsString(responseDTO);
+        messenger.send("RequestCreated",message);
     }
 }
